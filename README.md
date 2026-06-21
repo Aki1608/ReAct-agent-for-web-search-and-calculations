@@ -1,44 +1,36 @@
-# Autonomous Multi-Agent AI Team (CrewAI)
+# Autonomous ReAct AI Agent
 
-An advanced AI orchestration project that upgrades from a single-agent ReAct architecture to a **Multi-Agent System** using the **CrewAI** framework. Instead of relying on one AI model to juggle multiple tools and contexts, this repository creates a specialized "workforce" of AI agents that collaborate, delegate, and communicate to solve complex problems.
+A lightweight, single-agent system built using the **Reason + Act (ReAct)** framework. Powered by **LangChain 1.0**, **Groq's Llama-3**, and an interactive **Gradio** UI, this agent doesn't just predict text—it autonomously decides when to use external tools to solve complex, multi-step queries.
 
-Powered by LangChain tools, Groq's Llama-3, and a custom Gradio interface that captures real-time agent-to-agent dialogue.
-
----
-
-## The AI Crew (Agents)
-
-This system currently employs two highly specialized agents:
-1. **The Senior Researcher:** Has exclusive access to live web browsing (DuckDuckGo). Its only job is to find accurate numerical data, dates, and facts. It is strictly forbidden from doing math.
-2. **The Lead Mathematician:** Has exclusive access to the Python `numexpr` calculator tool. It cannot search the web; it relies entirely on the data handed to it by the Researcher to perform accurate calculations.
+This repository serves as a foundational exploration of autonomous AI workflows, featuring live web browsing and mathematical evaluation tools.
 
 ---
 
 ## Core Features
 
-* **Role-Based Execution:** Reduces LLM hallucinations by restricting agents to single, focused tasks.
-* **Sequential Processing:** Tasks are linked in a pipeline. The Researcher completes its data-gathering task and automatically passes its findings to the Mathematician's task.
-* **Terminal Interception:** Uses Python's `contextlib` to intercept CrewAI's standard terminal output and route it directly into the Gradio UI, allowing users to watch the agents "talk" to each other in real-time.
-* **Dynamic Context Injection:** Automatically injects the current system `datetime` into the task descriptions so the agents never have to waste API calls searching for today's date.
+* **ReAct Architecture:** The agent is forced to "think" out loud before acting, looping through a Thought -> Action -> Observation cycle until it finds a final answer.
+* **Native Tool Calling:** Utilizes LangChain's modern `create_agent` API for stable, JSON-based tool execution, avoiding legacy text-parsing errors.
+* **Live Web Search:** Integrates DuckDuckGo to break out of its training data cutoff and fetch real-world facts.
+* **Math Evaluator:** Uses Python's `numexpr` to safely evaluate complex mathematical expressions based on researched data.
+* **Transparent Thought UI:** A custom Gradio chat interface that visually parses and displays the agent's internal monologue and tool usage.
 
 ---
 
 ## Project Structure
 
-* `tools.py`: Defines the capabilities available to the agents (search and calculator tools).
-* `agent_core.py`: Defines the CrewAI Agents, Tasks, and the Sequential Crew process.
-* `app.py`: The Gradio web server that handles user input and captures the multi-agent console logs for the UI.
-* `requirements.txt`: Project dependencies (now including `crewai`).
-* `.env`: Configuration for the Groq API key.
-
+* `tools.py`: Defines the capabilities available to the agent (search and calculator tools).
+* `agent_core.py`: Initializes the LLM, binds the tools, and establishes the LangChain execution loop.
+* `app.py`: The Gradio web server that handles user input, system prompt injection (like current date), and chat history formatting.
+* `requirements.txt`: Project dependencies.
+  
 ---
 
 ## Installation & Setup
 
 **1. Clone the repository:**
 
-    git clone https://github.com/yourusername/multi-agent-crewai.git
-    cd multi-agent-crewai
+    git clone https://github.com/yourusername/ReAct-agent-for-web-search-and-calculations.git
+    cd ReAct-agent-for-web-search-and-calculations
 
 **2. Create a virtual environment:**
 
@@ -58,4 +50,17 @@ Create a `.env` file in the root directory and add your free Groq API key:
 
     python app.py
 
-Open the provided local URL in your web browser. Try asking: *"Find the current stock price of Tesla and divide it by 2."*
+Open the provided local URL in your web browser to start interacting with the agent.
+
+---
+
+## Known Limitations & Future Roadmap
+
+While this single-agent ReAct architecture is a powerful proof-of-concept, it intentionally demonstrates the architectural boundaries of relying on a single Large Language Model for complex workflows. Documenting these trade-offs paves the way for future iterations:
+
+1. **The Single-Agent Bottleneck:** A single LLM prompt is responsible for researching, parsing data, and executing math. If a web search returns messy text, the agent can become overwhelmed and inject non-mathematical strings into the Calculator tool, causing a crash.
+2. **Lack of Specialization:** Because one agent wears all the hats (Researcher, Mathematician, QA), complex tasks can degrade its focus. It lacks the safety of a "reviewer" node.
+3. **Temporal Blindness:** LLMs do not possess an internal clock. This architecture relies on hardcoded system prompt injections (passing the system `datetime` behind the scenes) to prevent the agent from hallucinating or wasting API calls trying to search for "today's date".
+
+### Next Steps: Multi-Agent Architecture
+To resolve these bottlenecks, the planned next iteration of this workflow is a transition to a **Multi-Agent System** (using frameworks like CrewAI or LangGraph). Delegating tasks to specialized agents (e.g., a dedicated "Researcher" passing clean data to a "Mathematician") will drastically reduce hallucinations and improve tool reliability.
