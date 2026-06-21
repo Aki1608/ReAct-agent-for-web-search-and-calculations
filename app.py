@@ -36,7 +36,7 @@ def process_query(user_input, history):
     reasoning_markdown = format_reasoning_chain(intermediate_steps)
     
     # Combine the reasoning chain and the final answer
-    full_response = f"### 🧠 Agent Reasoning Chain\n\n{reasoning_markdown}\n### ✅ Final Answer\n\n{final_answer}"
+    full_response = f"### Agent Reasoning Chain\n\n{reasoning_markdown}\n### Final Answer\n\n{final_answer}"
     
     # Append dictionaries instead of a tuple (matches modern Gradio requirements)
     history.append({"role": "user", "content": user_input})
@@ -46,7 +46,7 @@ def process_query(user_input, history):
 
 # Build the Chatbot Interface
 with gr.Blocks(theme=gr.themes.Soft()) as demo:
-    gr.Markdown("# 🤖 Autonomous AI Agent")
+    gr.Markdown("# Autonomous AI Agent")
     gr.Markdown("Ask a complex question. The agent will decide if it needs to search the web, calculate math, or use its own brain. **Try asking:** *'What is the current age of Leonardo DiCaprio multiplied by 4?'*")
     
     # Removed the unsupported 'type' argument
