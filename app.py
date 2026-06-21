@@ -5,44 +5,51 @@ from agent_core import ReActAgent
 agent = ReActAgent()
 
 def format_reasoning_chain(intermediate_steps):
-    """Parses LangChain's intermediate steps into a beautiful UI markdown string."""
+    """Parses LangChain 1.0 message objects into a readable UI format."""
     if not intermediate_steps:
-        return "*The agent used its internal knowledge directly without external tools.*"
+        return "*The agent used its internal knowledge directly without external tools.*\n\n"
     
     chain_log = ""
-    for step, observation in intermediate_steps:
-        # step is an AgentAction object which contains the raw log of the thought
-        # observation is the string returned by the tool
-        
-        # The 'log' contains the Thought, Action, and Action Input
-        chain_log += f"```text\n{step.log}\n"
-        chain_log += f"Observation: {observation}\n```\n\n"
-        
+    for msg in intermediate_steps:
+        # Extract the Agent's decision to use a tool (Action)
+        if hasattr(msg, 'tool_calls') and msg.tool_calls:
+            for tool in msg.tool_calls:
+                chain_log += f"**Thought:** I need to use an external tool.\n"
+                chain_log += f"**Action:** {tool['name']}\n"
+                chain_log += f"**Action Input:** {tool['args']}\n\n"
+                
+        # Extract the Tool's response (Observation)
+        elif msg.__class__.__name__ == "ToolMessage":
+            chain_log += f"**Observation:** {msg.content}\n\n"
+            
     return chain_log
 
 def process_query(user_input, history):
     """Processes the query and formats the chat UI response."""
     if not user_input.strip():
-        return history + [("Please enter a question.", None)]
+        return "", history
     
     # Run the agent
     final_answer, intermediate_steps = agent.solve(user_input)
     
-    # Format the intermediate steps into a clean markdown block
+    # Format the intermediate steps into a clean block
     reasoning_markdown = format_reasoning_chain(intermediate_steps)
     
     # Combine the reasoning chain and the final answer
-    full_response = f"### 🧠 Agent Reasoning Chain\n{reasoning_markdown}\n### Final Answer\n{final_answer}"
+    full_response = f"### 🧠 Agent Reasoning Chain\n\n{reasoning_markdown}\n### ✅ Final Answer\n\n{final_answer}"
     
-    # Append to Gradio chat history
-    history.append((user_input, full_response))
+    # Append dictionaries instead of a tuple (matches modern Gradio requirements)
+    history.append({"role": "user", "content": user_input})
+    history.append({"role": "assistant", "content": full_response})
+    
     return "", history
 
 # Build the Chatbot Interface
 with gr.Blocks(theme=gr.themes.Soft()) as demo:
-    gr.Markdown("# Autonomous ReAct Agent")
+    gr.Markdown("# 🤖 Autonomous AI Agent")
     gr.Markdown("Ask a complex question. The agent will decide if it needs to search the web, calculate math, or use its own brain. **Try asking:** *'What is the current age of Leonardo DiCaprio multiplied by 4?'*")
     
+    # Removed the unsupported 'type' argument
     chatbot = gr.Chatbot(height=600)
     
     with gr.Row():
